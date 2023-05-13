@@ -42,10 +42,6 @@ def temperature_to_percent(temp_celsius):
     percent = max(0, percent)  # ensure percentage is not negative
     return percent
 
-
-
-
-
 def get_elevation(header, start_date, stop_date, lat, long):
     """
     This return the elevation gotten from the header of the data
@@ -127,8 +123,8 @@ def runner(lat, long, start_date, stop_date):
     data = replace_missing_data(data)
     data = add_columns(data, cols_to_sum)
     avg_total = average_total(data)*100
-    grid_distance = calc_min_dist_to_infrastructure(lat,long,electrical_df)
-    market_distance = calc_min_dist_to_infrastructure(lat,long,market_df)
+    grid_distance = 100 #calc_min_dist_to_infrastructure(lat,long,electrical_df)
+    market_distance = 100 #calc_min_dist_to_infrastructure(lat,long,market_df)
     visualize_features_over_time(data, ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT'], 'combined_plot.png')
     return([avg_total,grid_distance,market_distance])
 
