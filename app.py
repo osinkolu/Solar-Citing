@@ -89,8 +89,8 @@ def runner(lat, long, start_date, stop_date):
     data = replace_missing_data(data)
     data = add_columns(data, cols_to_sum)
     avg_total = average_total(data)
-    grid_distance = calc_min_dist_to_infrastructure(lat,long,electrical_df)
-    market_distance = calc_min_dist_to_infrastructure(lat,long,market_df)
+    grid_distance = 100 #calc_min_dist_to_infrastructure(lat,long,electrical_df)
+    market_distance = 100 #calc_min_dist_to_infrastructure(lat,long,market_df)
     for feature in ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT']:
         visualize_feature_over_time(data, feature, feature+'.png')
     return([avg_total,grid_distance,market_distance])
