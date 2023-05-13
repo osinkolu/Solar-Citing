@@ -16,6 +16,34 @@ electrical_df = electrical_df.rename(columns={'lat':'X', 'lon':'Y'})
 
 parameters = 'ALLSKY_KT%2CALLSKY_SFC_SW_DWN%2CCLRSKY_KT%2CCLOUD_AMT%2CDIFFUSE_ILLUMINANCE%2CDIRECT_ILLUMINANCE%2CALLSKY_SFC_UV_INDEX%2CGLOBAL_ILLUMINANCE%2CTS%2CPS%2CT2M%2CSZA%2CALLSKY_SFC_SW_DIFF%2CALLSKY_SFC_SW_DNI%2CALLSKY_SFC_UVA'
 
+def convert_irr_to_percentage(irradiance, expected_output=0.6): #if we had 6hrs of sun daily
+    # Calculate the energy received per day in kWh
+    energy_received = irradiance / 1000 * 24  # 24 hours in a day
+
+    # Calculate the percentage of expected output
+    percentage_output = energy_received / expected_output * 100
+
+    return percentage_output
+
+def convert_lux_to_percentage(diffuse_illuminance, expected_dni = 1200):
+    # Calculate the expected diffuse illuminance from the DNI
+    expected_illuminance = 0.3 * expected_dni  # assuming a typical sky condition
+
+    # Calculate the percentage of expected DNI
+    percentage_dni = diffuse_illuminance /( expected_illuminance * 100)
+
+    return percentage_dni
+
+def temperature_to_percent(temp_celsius):
+    """Converts a temperature in Celsius to a value between 0 and 100,
+    where 50 represents the highest possible temperature."""
+    max_temp = 50  # set the maximum temperature to 50 degrees Celsius
+    percent = min(100, (temp_celsius / max_temp))  # convert temperature to percentage
+    percent = max(0, percent)  # ensure percentage is not negative
+    return percent
+
+
+
 
 
 def get_elevation(header, start_date, stop_date, lat, long):
@@ -54,9 +82,9 @@ def average_total(df):
     return df['total'].mean()
 
 
-def visualize_feature_over_time(data, feature_name, file_name):
+def visualize_features_over_time(data, feature_names, file_name):
     """
-    Visualizes the specified feature in a pandas DataFrame `data` over time,
+    Visualizes the specified features in a pandas DataFrame `data` over time,
     and saves the resulting plot as a PNG file with the specified `file_name`.
     """
     dataframe = data.rename(columns={'YEAR': 'year', 'MO': 'month', 'DY': 'day', 'HR': 'hour'})
@@ -66,17 +94,19 @@ def visualize_feature_over_time(data, feature_name, file_name):
     # Set the DatetimeIndex as the DataFrame index
     data = data.set_index(datetime_index)
     
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, axs = plt.subplots(len(feature_names), 1, figsize=(12, 8*len(feature_names)), sharex=True)
 
-    # Plot the specified feature over time
-    plt.plot(data[feature_name])
+    for i, feature_name in enumerate(feature_names):
+        # Plot the specified feature over time
+        axs[i].plot(data[feature_name])
+        axs[i].set_ylabel(feature_name)
+        axs[i].set_title('{} over Time'.format(feature_name))
+
+    # Set the x-axis label
     plt.xlabel('Date')
-    plt.ylabel(feature_name)
-    plt.title('{} over Time'.format(feature_name))
 
     # Save the plot as a PNG file
     plt.savefig(file_name)
-
 
 def runner(lat, long, start_date, stop_date):
 
@@ -85,14 +115,21 @@ def runner(lat, long, start_date, stop_date):
     data['elevation'] = elevation
     data['latitude'] = lat
     data['longitude'] = long
-    cols_to_sum = ['ALLSKY_KT', 'ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'CLOUD_AMT', 'DIFFUSE_ILLUMINANCE', 'DIRECT_ILLUMINANCE', 'ALLSKY_SFC_UV_INDEX', 'GLOBAL_ILLUMINANCE', 'TS', 'PS', 'T2M', 'SZA', 'ALLSKY_SFC_SW_DIFF', 'ALLSKY_SFC_SW_DNI', 'ALLSKY_SFC_UVA', 'elevation']
+    # Convert the irradiance to a percentage of expected output
+    data["CLOUD_AMT"] = data["CLOUD_AMT"]/100
+    data["DIFFUSE_ILLUMINANCE"] = convert_lux_to_percentage(data["DIFFUSE_ILLUMINANCE"])
+    data["DIRECT_ILLUMINANCE"] = convert_lux_to_percentage(data["DIRECT_ILLUMINANCE"])
+    data["GLOBAL_ILLUMINANCE"] = convert_lux_to_percentage(data["GLOBAL_ILLUMINANCE"])
+    data["TS"] = [temperature_to_percent(i) for i in data["TS"]]
+    data["ALLSKY_SFC_UV_INDEX"] = data["ALLSKY_SFC_UV_INDEX"]/data["ALLSKY_SFC_UV_INDEX"].max()
+    data["T2M"] = [temperature_to_percent(i) for i in data["T2M"]]
+    cols_to_sum = ['ALLSKY_KT', 'CLRSKY_KT', 'CLOUD_AMT', 'DIFFUSE_ILLUMINANCE', 'DIRECT_ILLUMINANCE', 'ALLSKY_SFC_UV_INDEX', 'GLOBAL_ILLUMINANCE', 'TS', 'T2M',]
     data = replace_missing_data(data)
     data = add_columns(data, cols_to_sum)
-    avg_total = average_total(data)
-    grid_distance = 100 #calc_min_dist_to_infrastructure(lat,long,electrical_df)
-    market_distance = 100 #calc_min_dist_to_infrastructure(lat,long,market_df)
-    for feature in ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT']:
-        visualize_feature_over_time(data, feature, feature+'.png')
+    avg_total = average_total(data)*100
+    grid_distance = calc_min_dist_to_infrastructure(lat,long,electrical_df)
+    market_distance = calc_min_dist_to_infrastructure(lat,long,market_df)
+    visualize_features_over_time(data, ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT'], 'combined_plot.png')
     return([avg_total,grid_distance,market_distance])
 
 
@@ -144,8 +181,7 @@ def imagex():
     data = request.get_json(force=True)
     lat,long, file_number,start_date, end_date = (data['lat'], data['lon'], data['file_number'],data["start_date"], data["end_date"])
     score = runner(lat, long,start_date, end_date)
-    filename = ['ALLSKY_SFC_SW_DWN.png', 'CLRSKY_KT.png', 'DIRECT_ILLUMINANCE.png', 'GLOBAL_ILLUMINANCE.png', 'CLOUD_AMT.png']
-    return send_file(filename[file_number], mimetype='image/gif')
+    return send_file('combined_plot.png', mimetype='image/gif')
 
 @app.route("/imagex_zip", methods=["GET", "POST"])
 @cross_origin()
