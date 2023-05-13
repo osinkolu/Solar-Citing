@@ -10,8 +10,8 @@ from geopy.distance import distance
 import zipfile
 
 
-electrical_df = pd.read_csv("useful_resource\electrical_grid_nigeria_15.csv")
-market_df = pd.read_csv("useful_resource\GRID3_Nigeria_-_Markets.csv")
+electrical_df = pd.read_csv("useful_resource/electrical_grid_nigeria_15.csv")
+market_df = pd.read_csv("useful_resource/GRID3_Nigeria_-_Markets.csv")
 electrical_df = electrical_df.rename(columns={'lat':'X', 'lon':'Y'})
 
 parameters = 'ALLSKY_KT%2CALLSKY_SFC_SW_DWN%2CCLRSKY_KT%2CCLOUD_AMT%2CDIFFUSE_ILLUMINANCE%2CDIRECT_ILLUMINANCE%2CALLSKY_SFC_UV_INDEX%2CGLOBAL_ILLUMINANCE%2CTS%2CPS%2CT2M%2CSZA%2CALLSKY_SFC_SW_DIFF%2CALLSKY_SFC_SW_DNI%2CALLSKY_SFC_UVA'
