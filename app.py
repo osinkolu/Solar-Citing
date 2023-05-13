@@ -10,9 +10,9 @@ from geopy.distance import distance
 import zipfile
 
 
-#electrical_df = pd.read_csv("useful_resource/electrical_grid_nigeria_15.csv")
-#market_df = pd.read_csv("useful_resource/GRID3_Nigeria_-_Markets.csv")
-#electrical_df = electrical_df.rename(columns={'lat':'X', 'lon':'Y'})
+electrical_df = pd.read_csv("useful_resource/electrical_grid_nigeria_15.csv")
+market_df = pd.read_csv("useful_resource/GRID3_Nigeria_-_Markets.csv")
+electrical_df = electrical_df.rename(columns={'lat':'X', 'lon':'Y'})
 
 parameters = 'ALLSKY_KT%2CALLSKY_SFC_SW_DWN%2CCLRSKY_KT%2CCLOUD_AMT%2CDIFFUSE_ILLUMINANCE%2CDIRECT_ILLUMINANCE%2CALLSKY_SFC_UV_INDEX%2CGLOBAL_ILLUMINANCE%2CTS%2CPS%2CT2M%2CSZA%2CALLSKY_SFC_SW_DIFF%2CALLSKY_SFC_SW_DNI%2CALLSKY_SFC_UVA'
 
@@ -89,8 +89,8 @@ def runner(lat, long, start_date, stop_date):
     data = replace_missing_data(data)
     data = add_columns(data, cols_to_sum)
     avg_total = average_total(data)
-    grid_distance = 1#calc_min_dist_to_infrastructure(lat,long,electrical_df)
-    market_distance =1 #calc_min_dist_to_infrastructure(lat,long,market_df)
+    grid_distance = calc_min_dist_to_infrastructure(lat,long,electrical_df)
+    market_distance = calc_min_dist_to_infrastructure(lat,long,market_df)
     for feature in ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT']:
         visualize_feature_over_time(data, feature, feature+'.png')
     return([avg_total,grid_distance,market_distance])
@@ -146,6 +146,9 @@ def imagex():
     score = runner(lat, long,start_date, end_date)
     filename = ['ALLSKY_SFC_SW_DWN.png', 'CLRSKY_KT.png', 'DIRECT_ILLUMINANCE.png', 'GLOBAL_ILLUMINANCE.png', 'CLOUD_AMT.png']
     return send_file(filename[file_number], mimetype='image/gif')
+
+@app.route("/imagex_zip", methods=["GET", "POST"])
+@cross_origin()
 
 def imagex_zip():
     data = request.get_json(force=True)
