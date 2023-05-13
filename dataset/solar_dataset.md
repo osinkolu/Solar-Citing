@@ -1,3 +1,5 @@
+This dataset contains sample point from 1st January, 2022 to 31st January, 2022. The data was collected for various local government in Nigeria through NASA meterological api.
+
 Data Attributes
 1. Year of the data point - 'YEAR'
 2. Month of the data point - 'MO'
@@ -21,9 +23,11 @@ Data Attributes
 20. Elevation is measured meters - 'elevation'
 21. Latitude for the data point - 'latitude'
 22. Longitude for the data point - 'longitude'
-23. Minimum Distance in Kilometers - 'minimum_distance'
+23. Minimum Distance from power grid in Kilometers - 'minimum_distance'
 
+There are other relevant data sets that can be aggregated with the solar_dataset to make the dataset more robust.
 
 ### References
 1. https://power.larc.nasa.gov/
 2. https://data.humdata.org/
+3. https://data.grid3.org/
