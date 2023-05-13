@@ -1,15 +1,18 @@
 import pandas as pd
 import numpy as np
 import requests
-import json
-import csv
-import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
-import json
-from flask import Flask,render_template,request, jsonify, send_file
+from flask import Flask,request, jsonify, send_file
 from flask_cors import CORS, cross_origin
+from geopy.distance import distance
+import zipfile
+
+
+electrical_df = pd.read_csv("useful_resource\electrical_grid_nigeria_15.csv")
+market_df = pd.read_csv("useful_resource\GRID3_Nigeria_-_Markets.csv")
+electrical_df = electrical_df.rename(columns={'lat':'X', 'lon':'Y'})
 
 parameters = 'ALLSKY_KT%2CALLSKY_SFC_SW_DWN%2CCLRSKY_KT%2CCLOUD_AMT%2CDIFFUSE_ILLUMINANCE%2CDIRECT_ILLUMINANCE%2CALLSKY_SFC_UV_INDEX%2CGLOBAL_ILLUMINANCE%2CTS%2CPS%2CT2M%2CSZA%2CALLSKY_SFC_SW_DIFF%2CALLSKY_SFC_SW_DNI%2CALLSKY_SFC_UVA'
 
@@ -76,9 +79,7 @@ def visualize_feature_over_time(data, feature_name, file_name):
 
 
 def runner(lat, long, start_date, stop_date):
-    start_date = 20220101
-    stop_date = 20220101
-    # %timeit elevation = get_elevation()
+
     elevation = get_elevation('true',start_date, stop_date, lat, long)
     data = data_to_dataframe('false',start_date, stop_date, lat, long)
     data['elevation'] = elevation
@@ -88,10 +89,33 @@ def runner(lat, long, start_date, stop_date):
     data = replace_missing_data(data)
     data = add_columns(data, cols_to_sum)
     avg_total = average_total(data)
+    grid_distance = calc_min_dist_to_infrastructure(lat,long,electrical_df)
+    market_distance = calc_min_dist_to_infrastructure(lat,long,market_df)
     for feature in ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT']:
         visualize_feature_over_time(data, feature, feature+'.png')
-    return(avg_total)
+    return([avg_total,grid_distance,market_distance])
 
+
+def calc_min_dist_to_infrastructure(lat, long, infrastructure_df):
+    infra_lat = infrastructure_df.X.tolist()
+    infra_long = infrastructure_df.Y.tolist()
+
+    min_length = 1000000
+    for _lat,_long in zip(infra_lat, infra_long):
+        
+        location_1 = (lat, long)
+        location_2 = (_lat, _long)
+    
+        dist = distance(location_1, location_2).km
+        if dist < min_length:
+            min_length = dist
+    return min_length
+
+def zip_all():
+    zipf = zipfile.ZipFile('viz.zip','w', zipfile.ZIP_DEFLATED)
+    for file in ['ALLSKY_SFC_SW_DWN.png', 'CLRSKY_KT.png', 'DIRECT_ILLUMINANCE.png', 'GLOBAL_ILLUMINANCE.png', 'CLOUD_AMT.png']:
+        zipf.write('output/'+file)
+    zipf.close()
 
 app = Flask(__name__)
 cors = CORS(app) #Allow Cross Origin
@@ -122,6 +146,16 @@ def imagex():
     score = runner(lat, long,start_date, end_date)
     filename = ['ALLSKY_SFC_SW_DWN.png', 'CLRSKY_KT.png', 'DIRECT_ILLUMINANCE.png', 'GLOBAL_ILLUMINANCE.png', 'CLOUD_AMT.png']
     return send_file(filename[file_number], mimetype='image/gif')
+
+def imagex_zip():
+    data = request.get_json(force=True)
+    lat,long, file_number,start_date, end_date = (data['lat'], data['lon'], data['file_number'],data["start_date"], data["end_date"])
+    score = runner(lat, long,start_date, end_date)
+    zip_all()
+    return send_file('viz.zip',
+            mimetype = 'zip',
+            attachment_filename= 'viz.zip',
+            as_attachment = True)
 
 
 if __name__ =="__main__":
