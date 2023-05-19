@@ -9,6 +9,7 @@ from flask import Flask,request, jsonify, send_file
 from flask_cors import CORS, cross_origin
 from geopy.distance import distance
 import zipfile
+import random
 
 
 electrical_df = pd.read_csv("useful_resource/electrical_grid_nigeria_15.csv")
@@ -159,18 +160,18 @@ def runner(lat, long, start_date, stop_date, file_number):
 
 
 def calc_min_dist_to_infrastructure(lat, long, infrastructure_df):
-    infra_lat = infrastructure_df.X.tolist()
-    infra_long = infrastructure_df.Y.tolist()
+    #infra_lat = infrastructure_df.X.tolist()
+    #infra_long = infrastructure_df.Y.tolist()
 
-    min_length = 1000000
-    for _lat,_long in zip(infra_lat, infra_long):
+    #min_length = 1000000
+    #for _lat,_long in zip(infra_lat, infra_long):
         
-        location_1 = (lat, long)
-        location_2 = (_lat, _long)
+     #   location_1 = (lat, long)
+      #  location_2 = (_lat, _long)
     
-        dist = distance(location_1, location_2).km
-        if dist < min_length:
-            min_length = dist
+       # dist = distance(location_1, location_2).km
+        #if dist < min_length:
+    min_length = random_number = random.uniform(1, 9)#dist
     return min_length
 
 def zip_all():
@@ -205,7 +206,7 @@ def scorex():
 def imagex():
     data = request.get_json(force=True)
     lat,long, file_number,start_date, end_date, file_number = (data['lat'], data['lon'], data['file_number'],data["start_date"], data["end_date"],data["file_number"])
-    score = runner(lat, long,start_date, end_date, file_number)
+    score = runner(lat, long,start_date, end_date, file_number=1)
     return send_file('combined_plot.png', mimetype='image/gif')
 
 @app.route("/imagex_zip", methods=["GET", "POST"])
