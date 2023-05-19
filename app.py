@@ -103,7 +103,7 @@ def visualize_features_over_time(data, feature_names, file_name):
     and saves the resulting plot as a PNG file with the specified `file_name`.
     """
     dataframe = data.rename(columns={'YEAR': 'year', 'MO': 'month', 'DY': 'day', 'HR': 'hour'})
-    data = data.rename(columns = {'ALLSKY_SFC_SW_DWN':'All Sky Surface Shortwave Downward Irradiance', 'CLRSKY_KT':'Clear Sky Insolation Clearness Index', 'DIRECT_ILLUMINANCE':'DIRECT_ILLUMINANCE in lux', 'GLOBAL_ILLUMINANCE':'GLOBAL_ILLUMINANCE in lux' , 'CLOUD_AMT':'Cloud Amount is measured in %'})
+    data = data.rename(columns = {'ALLSKY_SFC_SW_DWN':'All Sky Surface Shortwave Downward Irradiance', 'CLRSKY_KT':'Clear Sky Insolation Clearness Index', 'DIRECT_ILLUMINANCE':'DIRECT ILLUMINANCE in lux', 'GLOBAL_ILLUMINANCE':'GLOBAL ILLUMINANCE in lux' , 'CLOUD_AMT':'Cloud Amount is measured in %'})
     feature_names = ['All Sky Surface Shortwave Downward Irradiance', 'Clear Sky Insolation Clearness Index', 'DIRECT ILLUMINANCE in lux', 'GLOBAL ILLUMINANCE in lux' , 'Cloud Amount is measured in %']
     # Create datetime index
     datetime_index = pd.to_datetime(dataframe[['year', 'month', 'day', 'hour']], format='%Y-%m-%d %H:%M:%S')
