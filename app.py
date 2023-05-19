@@ -3,7 +3,7 @@ import numpy as np
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
+#from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 from flask import Flask,request, jsonify, send_file
 from flask_cors import CORS, cross_origin
@@ -49,10 +49,15 @@ def scale_dataframe(data):
     Scales the values in each column of a DataFrame to values between 0.01 and 0.99.
     Returns the scaled DataFrame.
     """
-    scaler = MinMaxScaler(feature_range=(0.01, 0.99))
-    scaled_data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
-    return scaled_data
+    scaled_data = pd.DataFrame()
 
+    for column in data.columns:
+        min_value = data[column].min()
+        max_value = data[column].max()
+        scaled_column = 0.01 + ((data[column] - min_value) * 0.98) / (max_value - min_value)
+        scaled_data[column] = scaled_column
+
+    return scaled_data
 
 
 
