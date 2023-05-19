@@ -42,6 +42,20 @@ def temperature_to_percent(temp_celsius):
     percent = max(0, percent)  # ensure percentage is not negative
     return percent
 
+from sklearn.preprocessing import MinMaxScaler
+
+def scale_dataframe(data):
+    """
+    Scales the values in each column of a DataFrame to values between 0.01 and 0.99.
+    Returns the scaled DataFrame.
+    """
+    scaler = MinMaxScaler(feature_range=(0.01, 0.99))
+    scaled_data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
+    return scaled_data
+
+
+
+
 def get_elevation(header, start_date, stop_date, lat, long):
     """
     This return the elevation gotten from the header of the data
@@ -84,6 +98,8 @@ def visualize_features_over_time(data, feature_names, file_name):
     and saves the resulting plot as a PNG file with the specified `file_name`.
     """
     dataframe = data.rename(columns={'YEAR': 'year', 'MO': 'month', 'DY': 'day', 'HR': 'hour'})
+    data = data.rename(columns = {'ALLSKY_SFC_SW_DWN':'All Sky Surface Shortwave Downward Irradiance', 'CLRSKY_KT':'Clear Sky Insolation Clearness Index', 'DIRECT_ILLUMINANCE':'DIRECT_ILLUMINANCE in lux', 'GLOBAL_ILLUMINANCE':'GLOBAL_ILLUMINANCE in lux' , 'CLOUD_AMT':'Cloud Amount is measured in %'})
+    feature_names = ['All Sky Surface Shortwave Downward Irradiance', 'Clear Sky Insolation Clearness Index', 'DIRECT ILLUMINANCE in lux', 'GLOBAL ILLUMINANCE in lux' , 'Cloud Amount is measured in %']
     # Create datetime index
     datetime_index = pd.to_datetime(dataframe[['year', 'month', 'day', 'hour']], format='%Y-%m-%d %H:%M:%S')
 
@@ -104,7 +120,7 @@ def visualize_features_over_time(data, feature_names, file_name):
     # Save the plot as a PNG file
     plt.savefig(file_name)
 
-def runner(lat, long, start_date, stop_date):
+def runner(lat, long, start_date, stop_date, file_number):
 
     elevation = get_elevation('true',start_date, stop_date, lat, long)
     data = data_to_dataframe('false',start_date, stop_date, lat, long)
@@ -112,21 +128,29 @@ def runner(lat, long, start_date, stop_date):
     data['latitude'] = lat
     data['longitude'] = long
     # Convert the irradiance to a percentage of expected output
-    data["CLOUD_AMT"] = data["CLOUD_AMT"]/100
-    data["DIFFUSE_ILLUMINANCE"] = convert_lux_to_percentage(data["DIFFUSE_ILLUMINANCE"])
-    data["DIRECT_ILLUMINANCE"] = convert_lux_to_percentage(data["DIRECT_ILLUMINANCE"])
-    data["GLOBAL_ILLUMINANCE"] = convert_lux_to_percentage(data["GLOBAL_ILLUMINANCE"])
-    data["TS"] = [temperature_to_percent(i) for i in data["TS"]]
-    data["ALLSKY_SFC_UV_INDEX"] = data["ALLSKY_SFC_UV_INDEX"]/data["ALLSKY_SFC_UV_INDEX"].max()
-    data["T2M"] = [temperature_to_percent(i) for i in data["T2M"]]
-    cols_to_sum = ['ALLSKY_KT', 'CLRSKY_KT', 'CLOUD_AMT', 'DIFFUSE_ILLUMINANCE', 'DIRECT_ILLUMINANCE', 'ALLSKY_SFC_UV_INDEX', 'GLOBAL_ILLUMINANCE', 'TS', 'T2M',]
+   # data["CLOUD_AMT"] = data["CLOUD_AMT"]/100
+   # data["DIFFUSE_ILLUMINANCE"] = convert_lux_to_percentage(data["DIFFUSE_ILLUMINANCE"])
+    #data["DIRECT_ILLUMINANCE"] = convert_lux_to_percentage(data["DIRECT_ILLUMINANCE"])
+    #data["GLOBAL_ILLUMINANCE"] = convert_lux_to_percentage(data["GLOBAL_ILLUMINANCE"])
+    #data["TS"] = [temperature_to_percent(i) for i in data["TS"]]
+    #data["ALLSKY_SFC_UV_INDEX"] = data["ALLSKY_SFC_UV_INDEX"]/data["ALLSKY_SFC_UV_INDEX"].max()
+    #data["T2M"] = [temperature_to_percent(i) for i in data["T2M"]]
+    cols_to_sum = ['ALLSKY_KT', 'ALLSKY_SFC_SW_DWN', 'CLRSKY_KT','CLOUD_AMT', 'DIFFUSE_ILLUMINANCE', 'DIRECT_ILLUMINANCE','ALLSKY_SFC_UV_INDEX', 'GLOBAL_ILLUMINANCE', 'TS', 'PS', 'T2M', 'SZA','ALLSKY_SFC_SW_DIFF', 'ALLSKY_SFC_SW_DNI', 'ALLSKY_SFC_UVA']
     data = replace_missing_data(data)
-    data = add_columns(data, cols_to_sum)
-    avg_total = average_total(data)*100
-    grid_distance = 100 #calc_min_dist_to_infrastructure(lat,long,electrical_df)
-    market_distance = 100 #calc_min_dist_to_infrastructure(lat,long,market_df)
-    visualize_features_over_time(data, ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT'], 'combined_plot.png')
-    return([avg_total,grid_distance,market_distance])
+    scaled_data = data[cols_to_sum]
+    scaled_data = scale_dataframe(scaled_data)
+    scaled_data = add_columns(scaled_data, cols_to_sum)
+    avg_total = (average_total(scaled_data)/len(cols_to_sum))*100
+    print(scaled_data)
+    if file_number == 0:        
+        grid_distance = calc_min_dist_to_infrastructure(lat,long,electrical_df)
+        market_distance = calc_min_dist_to_infrastructure(lat,long,market_df)
+        return([round(avg_total,2),round(grid_distance,2),round(market_distance,2)])
+    
+    elif file_number == 1:
+        visualize_features_over_time(data, ['ALLSKY_SFC_SW_DWN', 'CLRSKY_KT', 'DIRECT_ILLUMINANCE', 'GLOBAL_ILLUMINANCE', 'CLOUD_AMT'], 'combined_plot.png')
+        return(0,0,0)
+
 
 
 def calc_min_dist_to_infrastructure(lat, long, infrastructure_df):
@@ -166,8 +190,8 @@ def index():
 
 def scorex():
     data = request.get_json(force=True)
-    lat,long,start_date, end_date = (data['lat'], data['lon'], data["start_date"], data["end_date"])
-    score = runner(lat, long,start_date, end_date)
+    lat,long,start_date, end_date, file_number = (data['lat'], data['lon'], data["start_date"], data["end_date"], data["file_number"])
+    score = runner(lat, long,start_date, end_date, file_number)
     return jsonify(score)
 
 @app.route("/imagex", methods=["GET", "POST"])
@@ -175,8 +199,8 @@ def scorex():
 
 def imagex():
     data = request.get_json(force=True)
-    lat,long, file_number,start_date, end_date = (data['lat'], data['lon'], data['file_number'],data["start_date"], data["end_date"])
-    score = runner(lat, long,start_date, end_date)
+    lat,long, file_number,start_date, end_date, file_number = (data['lat'], data['lon'], data['file_number'],data["start_date"], data["end_date"],data["file_number"])
+    score = runner(lat, long,start_date, end_date, file_number)
     return send_file('combined_plot.png', mimetype='image/gif')
 
 @app.route("/imagex_zip", methods=["GET", "POST"])
