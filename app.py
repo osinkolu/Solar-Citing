@@ -3,6 +3,7 @@ import numpy as np
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 from flask import Flask,request, jsonify, send_file
 from flask_cors import CORS, cross_origin
@@ -42,7 +43,6 @@ def temperature_to_percent(temp_celsius):
     percent = max(0, percent)  # ensure percentage is not negative
     return percent
 
-from sklearn.preprocessing import MinMaxScaler
 
 def scale_dataframe(data):
     """
