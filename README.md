@@ -20,7 +20,9 @@ To get started with the NASA Solar Data API extension, follow the instructions b
    
    ```
 
-2.  ```cd nasa-solar-data-api-extension
+2.  ```
+    cd nasa-solar-data-api-extension
+    
     ```
 
 3.  ```
