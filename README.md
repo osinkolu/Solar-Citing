@@ -20,7 +20,7 @@ To use SolarCite, follow these steps:
 1. Clone this repository to your local machine.
 2. Install the necessary dependencies for the frontend and API by referring to the respective README files.
 3. Launch the frontend application by running the appropriate commands.
-4. Access the SolarCite website at [https://solarcite.netlify.app](https://solarcite.netlify.app).
+4. Access the SolarCite website on your localhost.
 5. Enter the latitude, longitude, start date, and end date to retrieve the solar siting score for a specific location.
 6. Explore the visualizations and maps provided to gain insights into renewable energy development potential.
 
