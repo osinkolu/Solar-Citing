@@ -1,6 +1,6 @@
 # NASA Solar Data API Extension
 
-This project extends the capabilities of the NASA API endpoint for solar data by allowing multiple API calls with a single request. It is built using Flask, a popular web framework for Python.
+This project was Built for the **TID hackathon**, it extends the capabilities of the NASA API endpoint for solar data by allowing multiple API calls with a single request. It is built using Flask, a popular web framework for Python.
 
 ## Getting Started
 
@@ -22,7 +22,7 @@ To get started with the NASA Solar Data API extension, follow the instructions b
 
 2.  ```
     cd nasa-solar-data-api-extension
-    
+
     ```
 
 3.  ```
