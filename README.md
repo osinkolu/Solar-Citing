@@ -11,7 +11,7 @@ SolarCite is an open-source data science application **developed for the TID hac
 - Visualization of data over time and Google Maps integration for location mapping
 
 ## Extras.
-- A Custom built extended version of the Nasa API is available in the Nasa-Extension Branch in this repository😉
+- A Custom built extended version of the Nasa API is available in the Nasa-Extension Branch in this repository 😉
 
 ## How to Use
 
@@ -43,5 +43,5 @@ SolarCite is released under the [MIT License](LICENSE).
 
 ## Contact
 
-If you have any questions or inquiries about SolarCite, please contact Victor on LinkedIn https://www.linkedin.com/in/olufemi-victor-tolulope/.
+If you have any questions or inquiries about SolarCite, please contact [Victor on LinkedIn](https://www.linkedin.com/in/olufemi-victor-tolulope/.)
 
