@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from flask import Flask,request, jsonify, send_file
 from flask_cors import CORS, cross_origin
-from geopy.distance import distance
+from geopy.distance import geodesic
 import zipfile
 import random
 
@@ -142,12 +142,30 @@ def runner(lat, long, start_date, stop_date, file_number):
     #data["ALLSKY_SFC_UV_INDEX"] = data["ALLSKY_SFC_UV_INDEX"]/data["ALLSKY_SFC_UV_INDEX"].max()
     #data["T2M"] = [temperature_to_percent(i) for i in data["T2M"]]
     cols_to_sum = ['ALLSKY_KT', 'ALLSKY_SFC_SW_DWN', 'CLRSKY_KT','CLOUD_AMT', 'DIFFUSE_ILLUMINANCE', 'DIRECT_ILLUMINANCE','ALLSKY_SFC_UV_INDEX', 'GLOBAL_ILLUMINANCE', 'TS', 'PS', 'T2M', 'SZA','ALLSKY_SFC_SW_DIFF', 'ALLSKY_SFC_SW_DNI', 'ALLSKY_SFC_UVA']
+    data["CLOUD_AMT"] = 1 - data["CLOUD_AMT"]
+    data['GLOBAL_ILLUMINANCE'] *= 0.20
+    data['ALLSKY_SFC_SW_DWN'] *= 0.15
+    data['DIRECT_ILLUMINANCE'] *= 0.12
+    data['DIFFUSE_ILLUMINANCE'] *= 0.10
+    data['ALLSKY_SFC_SW_DNI'] *= 0.09
+    data['ALLSKY_SFC_SW_DIFF'] *= 0.08
+    data['TS'] *= 0.07
+    data['T2M'] *= 0.06
+    data['ALLSKY_SFC_UVA'] *= 0.05
+    data['CLOUD_AMT'] *= 0.04
+    data['CLRSKY_KT'] *= 0.03
+    data['ALLSKY_KT'] *= 0.03
+    data['SZA'] *= 0.02
+    data['ALLSKY_SFC_UV_INDEX'] *= 0.01
+    data['PS'] *= 0.01
+
+
     data = replace_missing_data(data)
     scaled_data = data[cols_to_sum]
     scaled_data = scale_dataframe(scaled_data)
     scaled_data = add_columns(scaled_data, cols_to_sum)
     avg_total = (average_total(scaled_data)/len(cols_to_sum))*100
-    print(scaled_data)
+
     if file_number == 0:        
         grid_distance = calc_min_dist_to_infrastructure(lat,long,electrical_df)
         market_distance = calc_min_dist_to_infrastructure(lat,long,market_df)
@@ -160,19 +178,17 @@ def runner(lat, long, start_date, stop_date, file_number):
 
 
 def calc_min_dist_to_infrastructure(lat, long, infrastructure_df):
-    #infra_lat = infrastructure_df.X.tolist()
-    #infra_long = infrastructure_df.Y.tolist()
+    infra_lat = infrastructure_df.X.values
+    infra_long = infrastructure_df.Y.values
 
-    #min_length = 1000000
-    #for _lat,_long in zip(infra_lat, infra_long):
-        
-     #   location_1 = (lat, long)
-      #  location_2 = (_lat, _long)
-    
-       # dist = distance(location_1, location_2).km
-        #if dist < min_length:
-    min_length = random_number = random.uniform(1, 9)#dist
-    return min_length
+    locations = np.column_stack((infra_lat, infra_long))
+    target_location = (lat, long)
+
+    distances = np.array([geodesic(target_location, location).km for location in locations])
+    min_distance = np.min(distances)
+
+    return min_distance
+
 
 def zip_all():
     zipf = zipfile.ZipFile('viz.zip','w', zipfile.ZIP_DEFLATED)
