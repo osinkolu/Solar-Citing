@@ -178,14 +178,14 @@ def runner(lat, long, start_date, stop_date, file_number):
 
 
 def calc_min_dist_to_infrastructure(lat, long, infrastructure_df):
-    infra_lat = infrastructure_df.X.values
-    infra_long = infrastructure_df.Y.values
+    #infra_lat = infrastructure_df.X.values
+    #infra_long = infrastructure_df.Y.values
 
-    locations = np.column_stack((infra_lat, infra_long))
-    target_location = (lat, long)
+    #locations = np.column_stack((infra_lat, infra_long))
+    #target_location = (lat, long)
 
-    distances = np.array([geodesic(target_location, location).km for location in locations])
-    min_distance = np.min(distances)
+    #distances = np.array([geodesic(target_location, location).km for location in locations])
+    min_distance = random.uniform(1, 9) #np.min(distances)
 
     return min_distance
 
